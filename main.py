@@ -21,8 +21,8 @@ class Pessoa:
         self.vx = random.uniform(-1, 1)
         self.vy = random.uniform(-1, 1)
         self.ativo = True
-        self.visible = True  # Novo atributo para controlar a visibilidade
-        self.tempo_formacao = None  # Novo atributo para marcar o tempo
+        self.visible = True  
+        self.tempo_formacao = None 
 
     def mover(self, largura, altura):
         if not self.ativo:
@@ -39,7 +39,7 @@ class Pessoa:
     def distancia(self, outra):
         return math.hypot(self.x - outra.x, self.y - outra.y)
 
-# ----- Algoritmo do par mais próximo (sem alterações) -----
+# ----- Algoritmo do par mais próximo -----
 def encontrar_par_mais_proximo(pessoas):
     pessoas_ativas = [p for p in pessoas if p.ativo]
     if len(pessoas_ativas) < 2:
@@ -158,7 +158,7 @@ for p in st.session_state.pessoas:
     
     # Verifica se um casal formado deve desaparecer
     if not p.ativo and p.tempo_formacao:
-        if time.time() - p.tempo_formacao > 3: # 3 segundos de "fama"
+        if time.time() - p.tempo_formacao > 3:
             p.visible = False
 
 # ----- Encontrar par mais próximo -----
@@ -176,7 +176,7 @@ for p in st.session_state.pessoas:
             ax.plot(p.x, p.y, 'o', color='#0066cc', markersize=8)
         else:
             # Casal recém-formado (vermelho)
-            ax.plot(p.x, p.y, 'o', color='#ff4d4d', markersize=10) # Destaque maior
+            ax.plot(p.x, p.y, 'o', color='#ff4d4d', markersize=10)
             ax.text(p.x + 1, p.y, p.nome.split()[0], fontsize=9, color='#333333')
 
 # Linha do cupido para o próximo casal

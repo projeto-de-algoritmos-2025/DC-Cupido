@@ -11,13 +11,17 @@
 ## Link do vídeo de apresentação do projeto
 
 
-
 ## ℹ️ Sobre o Projeto
 
 Você é o **Cupido** observando uma praça vista de cima. Várias pessoas (pontos) andam aleatoriamente. Com suas flexas, você pode usar o algoritmo do par de pontos mais próximos para unir dois corações. Eles "saem do gráfico" como se estivessem indo namorar. O jogo continua até todos os pontos serem pareados ou o usuário decidir trocar de cidade (novo mapa).
 
 
 ## Screenshots
+
+
+## Vídeo demonstrativo 
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HwRLZ7BuL8s?si=uRR7iJ8JVlGoPCif" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 
 
@@ -41,4 +45,25 @@ Depois de instalar tudo corretamente, execute o seguinte comando no terminal:
 streamlit run main.py
 ```
 ### Na interface web:
+
+1. **🏙️ Visualização da Praça**: 
+   - Pontos azuis representam pessoas solteiras andando pela praça
+   - Uma linha roxa tracejada conecta o par mais próximo em tempo real (onde a flexa do cupido está mais propícia a cair)
+
+2. **💘 Flexar casal mais próximo**: 
+   - Clique neste botão para formar um casal com as duas pessoas mais próximas a partir do algoritmo de par de pontos mais próximos
+   - O par se torna vermelho e seus nomes aparecem no gráfico
+   - Após 3 segundos, o casal "sai da praça"
+   - Uma mensagem de sucesso mostra os nomes do novo casal
+
+3. **🏙️ Nova cidade (Resetar)**:
+   - Gera uma nova praça com 20 pessoas aleatórias
+   - Redefine todos os contadores e limpa a lista de casais
+
+4. **📊 Acompanhe o progresso**:
+   - **Casais Formados**: contador de casais unidos
+   - **Pessoas Restantes**: quantas pessoas ainda estão na praça
+   - **Lista de Casais**: histórico completo dos casais formados
+
+5. **🎯 Objetivo**: Continue formando casais até que todas as pessoas encontrem seu par!
 
