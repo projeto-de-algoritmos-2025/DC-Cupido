@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 from streamlit_autorefresh import st_autorefresh
 import names 
 
+st.set_page_config(
+    page_title="Cupido: Par de Pontos Mais Próximos",
+    page_icon="💘",
+)
+
 # ----- Classe Pessoa -----
 class Pessoa:
     def __init__(self, id, x, y):
