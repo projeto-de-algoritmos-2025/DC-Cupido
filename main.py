@@ -111,8 +111,8 @@ if 'pessoas' not in st.session_state:
 st_autorefresh(interval=200, key="auto_refresh")
 
 # ----- Título e Controles -----
-st.title("💘 Cupido: O Algoritmo do Amor")
-st.caption("As pessoas (pontos azuis) se movem aleatoriamente. O algoritmo encontra o par mais próximo para formar um casal.")
+st.title("💘 Cupido: Par de Pontos Mais Próximos")
+st.caption('Você é o Cupido observando uma praça vista de cima. Várias pessoas (pontos) andam aleatoriamente. Com suas flexas, você pode usar o algoritmo do par de pontos mais próximos para unir dois corações. Eles "saem do gráfico" como se estivessem indo namorar. O jogo continua até todos os pontos serem pareados ou o usuário decidir trocar de cidade (novo mapa).')
 
 
 col2, col3 = st.columns(2)
