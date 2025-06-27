@@ -3,14 +3,15 @@ import random
 import math
 import matplotlib.pyplot as plt
 from streamlit_autorefresh import st_autorefresh
-import names 
+import names
+import time
 
 st.set_page_config(
     page_title="Cupido: Par de Pontos Mais Próximos",
     page_icon="💘",
 )
 
-# ----- Classe Pessoa -----
+# ----- Classe Pessoa (Modificada) -----
 class Pessoa:
     def __init__(self, id, x, y):
         self.id = id
@@ -20,6 +21,8 @@ class Pessoa:
         self.vx = random.uniform(-1, 1)
         self.vy = random.uniform(-1, 1)
         self.ativo = True
+        self.visible = True  # Novo atributo para controlar a visibilidade
+        self.tempo_formacao = None  # Novo atributo para marcar o tempo
 
     def mover(self, largura, altura):
         if not self.ativo:
@@ -36,7 +39,7 @@ class Pessoa:
     def distancia(self, outra):
         return math.hypot(self.x - outra.x, self.y - outra.y)
 
-# ----- Algoritmo do par mais próximo -----
+# ----- Algoritmo do par mais próximo (sem alterações) -----
 def encontrar_par_mais_proximo(pessoas):
     pessoas_ativas = [p for p in pessoas if p.ativo]
     if len(pessoas_ativas) < 2:
@@ -100,7 +103,6 @@ def _strip_closest(strip, d):
             j += 1
     return par
 
-
 # ----- Inicialização do estado -----
 if 'pessoas' not in st.session_state:
     largura, altura = 100, 100
@@ -120,7 +122,6 @@ st_autorefresh(interval=200, key="auto_refresh")
 st.title("💘 Cupido: Par de Pontos Mais Próximos")
 st.caption('Você é o Cupido observando uma praça vista de cima. Várias pessoas (pontos) andam aleatoriamente. Com suas flexas, você pode usar o algoritmo do par de pontos mais próximos para unir dois corações. Eles "saem do gráfico" como se estivessem indo namorar. O jogo continua até todos os pontos serem pareados ou o usuário decidir trocar de cidade (novo mapa).')
 
-
 col2, col3 = st.columns(2)
 
 with col2:
@@ -129,6 +130,11 @@ with col2:
         if p1 and p2:
             p1.ativo = False
             p2.ativo = False
+            # Marca o tempo em que o casal foi formado
+            timestamp = time.time()
+            p1.tempo_formacao = timestamp
+            p2.tempo_formacao = timestamp
+            
             st.session_state.casais += 1
             st.session_state.lista_casais.append((p1.nome, p2.nome))
             st.success(f"Casal formado! **{p1.nome}** e **{p2.nome}** encontraram o amor!")
@@ -145,9 +151,15 @@ with col3:
         st.session_state.lista_casais = []
         st.rerun() 
 
-# ----- Movimentação -----
+# ----- Lógica de atualização e visibilidade -----
 for p in st.session_state.pessoas:
+    # Movimenta apenas as pessoas ativas
     p.mover(st.session_state.largura, st.session_state.altura)
+    
+    # Verifica se um casal formado deve desaparecer
+    if not p.ativo and p.tempo_formacao:
+        if time.time() - p.tempo_formacao > 3: # 3 segundos de "fama"
+            p.visible = False
 
 # ----- Encontrar par mais próximo -----
 par_mais_proximo = encontrar_par_mais_proximo(st.session_state.pessoas)
@@ -158,19 +170,29 @@ ax.set_xlim(0, st.session_state.largura)
 ax.set_ylim(0, st.session_state.altura)
 
 for p in st.session_state.pessoas:
-    if p.ativo:
-        ax.plot(p.x, p.y, 'o', color='#0066cc', markersize=8)  # Ponto azul mais forte
-    else:
-        ax.plot(p.x, p.y, 'o', color='#ff4d4d', markersize=8)  # Ponto vermelho para casal
-        ax.text(p.x + 1, p.y, p.nome.split()[0], fontsize=9, color='#333333')
+    # Apenas desenha as pessoas que são visíveis
+    if p.visible:
+        if p.ativo:
+            ax.plot(p.x, p.y, 'o', color='#0066cc', markersize=8)
+        else:
+            # Casal recém-formado (vermelho)
+            ax.plot(p.x, p.y, 'o', color='#ff4d4d', markersize=10) # Destaque maior
+            ax.text(p.x + 1, p.y, p.nome.split()[0], fontsize=9, color='#333333')
 
+# Linha do cupido para o próximo casal
 if par_mais_proximo[0] and par_mais_proximo[1]:
     ax.plot(
         [par_mais_proximo[0].x, par_mais_proximo[1].x],
         [par_mais_proximo[0].y, par_mais_proximo[1].y],
-        color='magenta', linestyle='--', linewidth=2, alpha=0.7,
+        color='magenta', linestyle='--', linewidth=2.5, alpha=0.9,
         label='Par mais próximo'
     )
+    # Adiciona uma seta para um efeito melhor
+    ax.arrow(par_mais_proximo[0].x, par_mais_proximo[0].y, 
+             par_mais_proximo[1].x - par_mais_proximo[0].x, 
+             par_mais_proximo[1].y - par_mais_proximo[0].y,
+             head_width=2, head_length=2, fc='magenta', ec='magenta', alpha=0.9)
+
 
 ax.set_title("Pessoas na Praça Virtual")
 ax.set_xticks([])
