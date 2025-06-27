@@ -36,7 +36,7 @@ class Pessoa:
     def distancia(self, outra):
         return math.hypot(self.x - outra.x, self.y - outra.y)
 
-# ----- Algoritmo do par mais próximo  -----
+# ----- Algoritmo do par mais próximo -----
 def encontrar_par_mais_proximo(pessoas):
     pessoas_ativas = [p for p in pessoas if p.ativo]
     if len(pessoas_ativas) < 2:
@@ -111,6 +111,7 @@ if 'pessoas' not in st.session_state:
         for i in range(20)
     ]
     st.session_state.casais = 0
+    st.session_state.lista_casais = []
 
 # Atualização automática
 st_autorefresh(interval=200, key="auto_refresh")
@@ -129,7 +130,7 @@ with col2:
             p1.ativo = False
             p2.ativo = False
             st.session_state.casais += 1
-            # 3. MENSAGEM DE SUCESSO ATUALIZADA COM NOMES
+            st.session_state.lista_casais.append((p1.nome, p2.nome))
             st.success(f"Casal formado! **{p1.nome}** e **{p2.nome}** encontraram o amor!")
         else:
             st.info("Todos já formaram um par! ❤️")
@@ -141,11 +142,15 @@ with col3:
             for i in range(20)
         ]
         st.session_state.casais = 0
+        st.session_state.lista_casais = []
         st.rerun() 
 
 # ----- Movimentação -----
 for p in st.session_state.pessoas:
     p.mover(st.session_state.largura, st.session_state.altura)
+
+# ----- Encontrar par mais próximo -----
+par_mais_proximo = encontrar_par_mais_proximo(st.session_state.pessoas)
 
 # ----- Mostrar gráfico -----
 fig, ax = plt.subplots(figsize=(8, 8))
@@ -156,15 +161,27 @@ for p in st.session_state.pessoas:
     if p.ativo:
         ax.plot(p.x, p.y, 'o', color='#0066cc', markersize=8)  # Ponto azul mais forte
     else:
-        # 4. GRÁFICO ATUALIZADO PARA MOSTRAR O NOME
         ax.plot(p.x, p.y, 'o', color='#ff4d4d', markersize=8)  # Ponto vermelho para casal
-        # Escreve o primeiro nome ao lado do ponto do casal
         ax.text(p.x + 1, p.y, p.nome.split()[0], fontsize=9, color='#333333')
+
+if par_mais_proximo[0] and par_mais_proximo[1]:
+    ax.plot(
+        [par_mais_proximo[0].x, par_mais_proximo[1].x],
+        [par_mais_proximo[0].y, par_mais_proximo[1].y],
+        color='magenta', linestyle='--', linewidth=2, alpha=0.7,
+        label='Par mais próximo'
+    )
 
 ax.set_title("Pessoas na Praça Virtual")
 ax.set_xticks([])
 ax.set_yticks([])
 st.pyplot(fig)
+
+# ----- Lista de casais -----
+if st.session_state.lista_casais:
+    st.markdown("### ❤️ Casais já formados:")
+    for idx, (nome1, nome2) in enumerate(st.session_state.lista_casais, 1):
+        st.markdown(f"{idx}. **{nome1}** ❤️ **{nome2}**")
 
 # ----- Estatísticas -----
 st.markdown("---")
