@@ -76,10 +76,11 @@ class Player:
         """Verifica se o jogador pode entrar em uma nova interação."""
         return self.state == "normal"
 
-
+# A função de plotagem agora só desenha, não gerencia a janela.
 def plot_players(players, turn):
-    plt.figure(figsize=(10,10))
-    
+    # Limpa a figura atual para o próximo quadro
+    plt.clf()
+
     # Filtra jogadores derrotados para não plotá-los
     active_players = [p for p in players if p.state != "defeated"]
     
@@ -100,7 +101,6 @@ def plot_players(players, turn):
         if p.state == "battle" and p.target:
             plt.plot([p.x, p.target.x], [p.y, p.target.y], 'r-', lw=1.5)
         elif p.state == "cooperate" and p.partner:
-            # Garante que a linha seja desenhada apenas uma vez
             if p.id < p.partner.id:
                 plt.plot([p.x, p.partner.x], [p.y, p.partner.y], 'g--', lw=1)
 
@@ -108,35 +108,40 @@ def plot_players(players, turn):
     plt.xlim(0, 1000)
     plt.ylim(0, 1000)
     plt.grid(True, linestyle='--', alpha=0.5)
-    plt.show()
+    
+    # A chamada a plt.show() foi removida daqui!
 
 # --- Setup da Simulação ---
 players = [Player(i, f"Player_{i}", random.randint(0, 1000), random.randint(0, 1000)) for i in range(NUM_PLAYERS)]
 proximity_history = {}
 
+# --- HABILITA O MODO INTERATIVO ---
+plt.ion() 
+
+# --- CRIA A FIGURA UMA ÚNICA VEZ ---
+fig = plt.figure(figsize=(10, 10))
+
 # --- Laço Principal da Simulação ---
 for turn in range(1, NUM_TURNS + 1):
     print(f"\n{'='*10} Turno {turn} {'='*10}")
 
-    # 1. Fase de Ações e Atualizações
-    # Primeiro, todos os jogadores que estão em batalha atacam
+    # 1. Fase de Ações e Atualizações (sem alterações)
     players_in_battle = [p for p in players if p.state == "battle" and p.target]
     for p in players_in_battle:
-        if p.target.state == "battle": # Garante que o alvo ainda está na batalha
+        if p.target.state == "battle":
             print(f"⚔️  {p.name} ataca {p.target.name}!")
             p.target.take_damage(p.attack_power)
 
-    # 2. Fase de Movimento
+    # 2. Fase de Movimento (sem alterações)
     for p in players:
         if p.state != "defeated":
             p.move()
 
-    # 3. Reset do Estado Temporário
+    # 3. Reset do Estado Temporário (sem alterações)
     for p in players:
         p.reset_turn_state()
 
-    # 4. Fase de Novas Interações (Batalha, Cooperação, etc.)
-    # Usamos uma lista de IDs para não processar um jogador duas vezes no mesmo turno
+    # 4. Fase de Novas Interações (sem alterações)
     processed_ids = set()
     for i in range(len(players)):
         for j in range(i + 1, len(players)):
@@ -148,7 +153,6 @@ for turn in range(1, NUM_TURNS + 1):
 
             dist = p1.distance_to(p2)
 
-            # Eventos baseados na distância
             if dist < BATTLE_RADIUS:
                 p1.state = "battle"
                 p2.state = "battle"
@@ -163,7 +167,6 @@ for turn in range(1, NUM_TURNS + 1):
                 p2.partner = p1
                 print(f"🤝 {p1.name} e {p2.name} estão cooperando.")
 
-            # Lógica de detecção de trapaça (agora mais robusta)
             key = tuple(sorted([p1.id, p2.id]))
             if dist < COOPERATE_RADIUS:
                 proximity_history[key] = proximity_history.get(key, 0) + 1
@@ -174,11 +177,15 @@ for turn in range(1, NUM_TURNS + 1):
                     if p2.state != "suspect":
                        p2.state = "suspect"
                        print(f"⚠️  Comportamento suspeito detectado: {p2.name}!")
-            # Não reseta o contador, permitindo que a suspeita seja construída ao longo do tempo
-            # Poderíamos adicionar uma lógica para diminuir o contador se eles ficarem longe
             
-    # 5. Visualização
-    plot_players(players, turn)
-    time.sleep(SLEEP_TIME)
+    # 5. Visualização (MODIFICADO)
+    plot_players(players, turn) # Chama a função para desenhar na figura
+    
+    # Pausa para atualizar a janela e permitir que você veja o quadro
+    plt.pause(SLEEP_TIME) 
+    # A chamada time.sleep() não é mais necessária
 
+# --- Desliga o modo interativo no final ---
+plt.ioff()
+plt.show() # Mostra o estado final da simulação e bloqueia
 print("\nSimulação finalizada.")
