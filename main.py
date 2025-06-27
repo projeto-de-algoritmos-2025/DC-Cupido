@@ -1,191 +1,189 @@
+import streamlit as st
 import random
 import math
 import matplotlib.pyplot as plt
-import time
+from streamlit_autorefresh import st_autorefresh
 
-# --- Constantes da Simulação ---
-NUM_PLAYERS = 50
-NUM_TURNS = 50
-SLEEP_TIME = 0.2
-CHEAT_THRESHOLD = 5
-
-# --- Constantes do Jogo ---
-INTERACTION_RADIUS = 50  # Raio para iniciar interações
-BATTLE_RADIUS = 15       # Raio para iniciar uma batalha
-COOPERATE_RADIUS = 30    # Raio para iniciar cooperação
-
-class Player:
-    def __init__(self, id, name, x, y):
+# ----- Classe Pessoa -----
+class Pessoa:
+    def __init__(self, id, x, y):
         self.id = id
-        self.name = name
         self.x = x
         self.y = y
-        self.kind = "Player"
-        
-        # Atributos de Jogo e Estado
-        self.max_hp = 100
-        self.hp = self.max_hp
-        self.attack_power = 10
-        self.state = "normal"  # normal, battle, cooperate, suspect, defeated
-        self.target = None
-        self.partner = None
-        self.proximity_counter = {} # Dicionário para rastrear proximidade com outros jogadores
+        self.vx = random.uniform(-1, 1)
+        self.vy = random.uniform(-1, 1)
+        self.ativo = True
 
-    def move(self):
-        # O movimento agora depende do estado do jogador
-        if self.state == "battle" and self.target:
-            # Persegue o alvo
-            dx = self.target.x - self.x
-            dy = self.target.y - self.y
-            dist = self.distance_to(self.target)
-            if dist > 0:
-                self.x += dx / dist * 3 # Movimento mais rápido em batalha
-                self.y += dy / dist * 3
-        elif self.state == "normal":
-            # Movimento aleatório
-            dx = random.randint(-5, 5)
-            dy = random.randint(-5, 5)
-            self.x += dx
-            self.y += dy
-        
-        # Mantém os jogadores dentro dos limites do mapa
-        self.x = max(0, min(1000, self.x))
-        self.y = max(0, min(1000, self.y))
+    def mover(self, largura, altura):
+        if not self.ativo:
+            return
+        self.x += self.vx
+        self.y += self.vy
 
-    def distance_to(self, other):
-        return math.hypot(self.x - other.x, self.y - other.y)
+        # Rebater nas bordas
+        if self.x <= 0 or self.x >= largura:
+            self.vx *= -1
+        if self.y <= 0 or self.y >= altura:
+            self.vy *= -1
 
-    def take_damage(self, damage):
-        self.hp -= damage
-        if self.hp <= 0:
-            self.hp = 0
-            self.state = "defeated"
-            print(f"☠️  {self.name} foi derrotado!")
+    def distancia(self, outra):
+        return math.hypot(self.x - outra.x, self.y - outra.y)
 
-    def reset_turn_state(self):
-        # Reseta estados que não são persistentes
-        if self.state not in ["battle", "defeated", "suspect"]:
-            self.state = "normal"
-            self.partner = None
-        # Se o alvo for derrotado ou fugir, sai da batalha
-        if self.state == "battle" and (self.target.state == "defeated" or self.distance_to(self.target) > BATTLE_RADIUS * 2):
-            self.state = "normal"
-            self.target = None
 
-    def is_available(self):
-        """Verifica se o jogador pode entrar em uma nova interação."""
-        return self.state == "normal"
-
-# A função de plotagem agora só desenha, não gerencia a janela.
-def plot_players(players, turn):
-    # Limpa a figura atual para o próximo quadro
-    plt.clf()
-
-    # Filtra jogadores derrotados para não plotá-los
-    active_players = [p for p in players if p.state != "defeated"]
+# ----- Algoritmo do par mais próximo otimizado -----
+def encontrar_par_mais_proximo(pessoas):
+    """
+    Encontra o par mais próximo usando divisão e conquista O(n log n)
+    Fallback para força bruta O(n²) quando há poucos pontos
+    """
+    pessoas_ativas = [p for p in pessoas if p.ativo]
     
-    xs = [p.x for p in active_players]
-    ys = [p.y for p in active_players]
-
-    colors = []
-    for p in active_players:
-        if p.state == "battle": colors.append("red")
-        elif p.state == "cooperate": colors.append("green")
-        elif p.state == "suspect": colors.append("orange")
-        else: colors.append("blue")
-
-    plt.scatter(xs, ys, c=colors, s=60, alpha=0.8)
+    if len(pessoas_ativas) < 2:
+        return (None, None)
     
-    # Desenha linhas para interações
-    for p in active_players:
-        if p.state == "battle" and p.target:
-            plt.plot([p.x, p.target.x], [p.y, p.target.y], 'r-', lw=1.5)
-        elif p.state == "cooperate" and p.partner:
-            if p.id < p.partner.id:
-                plt.plot([p.x, p.partner.x], [p.y, p.partner.y], 'g--', lw=1)
+    # Para muitos pontos, usa divisão e conquista
+    return _par_mais_proximo(pessoas_ativas)
 
-    plt.title(f"Turno {turn} | Jogadores Ativos: {len(active_players)}/{NUM_PLAYERS}")
-    plt.xlim(0, 1000)
-    plt.ylim(0, 1000)
-    plt.grid(True, linestyle='--', alpha=0.5)
+def _forca_bruta(pessoas):
+    """Algoritmo força bruta O(n²) para poucos pontos"""
+    min_dist = float('inf')
+    par = (None, None)
+    for i in range(len(pessoas)):
+        for j in range(i + 1, len(pessoas)):
+            d = pessoas[i].distancia(pessoas[j])
+            if d < min_dist:
+                min_dist = d
+                par = (pessoas[i], pessoas[j])
+    return par
+
+def _par_mais_proximo(pessoas):
+    # Ordena por coordenada x
+    px = sorted(pessoas, key=lambda p: p.x)
+    py = sorted(pessoas, key=lambda p: p.y)
     
-    # A chamada a plt.show() foi removida daqui!
+    return _par_mais_proximo_rec(px, py)
 
-# --- Setup da Simulação ---
-players = [Player(i, f"Player_{i}", random.randint(0, 1000), random.randint(0, 1000)) for i in range(NUM_PLAYERS)]
-proximity_history = {}
-
-# --- HABILITA O MODO INTERATIVO ---
-plt.ion() 
-
-# --- CRIA A FIGURA UMA ÚNICA VEZ ---
-fig = plt.figure(figsize=(10, 10))
-
-# --- Laço Principal da Simulação ---
-for turn in range(1, NUM_TURNS + 1):
-    print(f"\n{'='*10} Turno {turn} {'='*10}")
-
-    # 1. Fase de Ações e Atualizações (sem alterações)
-    players_in_battle = [p for p in players if p.state == "battle" and p.target]
-    for p in players_in_battle:
-        if p.target.state == "battle":
-            print(f"⚔️  {p.name} ataca {p.target.name}!")
-            p.target.take_damage(p.attack_power)
-
-    # 2. Fase de Movimento (sem alterações)
-    for p in players:
-        if p.state != "defeated":
-            p.move()
-
-    # 3. Reset do Estado Temporário (sem alterações)
-    for p in players:
-        p.reset_turn_state()
-
-    # 4. Fase de Novas Interações (sem alterações)
-    processed_ids = set()
-    for i in range(len(players)):
-        for j in range(i + 1, len(players)):
-            p1 = players[i]
-            p2 = players[j]
-
-            if not (p1.is_available() and p2.is_available()):
-                continue
-
-            dist = p1.distance_to(p2)
-
-            if dist < BATTLE_RADIUS:
-                p1.state = "battle"
-                p2.state = "battle"
-                p1.target = p2
-                p2.target = p1
-                print(f"🔥 Nova batalha iniciada entre {p1.name} e {p2.name}!")
-            
-            elif dist < COOPERATE_RADIUS:
-                p1.state = "cooperate"
-                p2.state = "cooperate"
-                p1.partner = p2
-                p2.partner = p1
-                print(f"🤝 {p1.name} e {p2.name} estão cooperando.")
-
-            key = tuple(sorted([p1.id, p2.id]))
-            if dist < COOPERATE_RADIUS:
-                proximity_history[key] = proximity_history.get(key, 0) + 1
-                if proximity_history[key] >= CHEAT_THRESHOLD:
-                    if p1.state != "suspect":
-                       p1.state = "suspect"
-                       print(f"⚠️  Comportamento suspeito detectado: {p1.name}!")
-                    if p2.state != "suspect":
-                       p2.state = "suspect"
-                       print(f"⚠️  Comportamento suspeito detectado: {p2.name}!")
-            
-    # 5. Visualização (MODIFICADO)
-    plot_players(players, turn) # Chama a função para desenhar na figura
+def _par_mais_proximo_rec(px, py):
+    """Função recursiva do algoritmo de divisão e conquista"""
+    n = len(px)
     
-    # Pausa para atualizar a janela e permitir que você veja o quadro
-    plt.pause(SLEEP_TIME) 
-    # A chamada time.sleep() não é mais necessária
+    # Caso base: poucos pontos
+    if n <= 3:
+        return _forca_bruta(px)
+    
+    # Divide no meio
+    mid = n // 2
+    midpoint = px[mid]
+    
+    pyl = [p for p in py if p.x <= midpoint.x]
+    pyr = [p for p in py if p.x > midpoint.x]
+    
+    # Conquista: encontra o par mais próximo em cada metade
+    par_esq = _par_mais_proximo_rec(px[:mid], pyl)
+    par_dir = _par_mais_proximo_rec(px[mid:], pyr)
+    
+    # Encontra a menor distância entre as duas metades
+    dist_esq = par_esq[0].distancia(par_esq[1]) if par_esq[0] else float('inf')
+    dist_dir = par_dir[0].distancia(par_dir[1]) if par_dir[0] else float('inf')
+    
+    if dist_esq <= dist_dir:
+        melhor_par = par_esq
+        min_dist = dist_esq
+    else:
+        melhor_par = par_dir
+        min_dist = dist_dir
+    
+    # Verifica pontos próximos à linha divisória
+    strip = [p for p in py if abs(p.x - midpoint.x) < min_dist]
+    par_strip = _strip_closest(strip, min_dist)
+    
+    if par_strip and par_strip[0]:
+        dist_strip = par_strip[0].distancia(par_strip[1])
+        if dist_strip < min_dist:
+            return par_strip
+    
+    return melhor_par
 
-# --- Desliga o modo interativo no final ---
-plt.ioff()
-plt.show() # Mostra o estado final da simulação e bloqueia
-print("\nSimulação finalizada.")
+def _strip_closest(strip, d):
+    """Encontra o par mais próximo na faixa central"""
+    min_dist = d
+    par = (None, None)
+    
+    # Ordena por coordenada y
+    strip.sort(key=lambda p: p.y)
+    
+    for i in range(len(strip)):
+        j = i + 1
+        # Verifica apenas pontos próximos em y (otimização crucial)
+        while j < len(strip) and (strip[j].y - strip[i].y) < min_dist:
+            dist = strip[i].distancia(strip[j])
+            if dist < min_dist:
+                min_dist = dist
+                par = (strip[i], strip[j])
+            j += 1
+    
+    return par
+
+
+# ----- Inicialização do estado -----
+if 'pessoas' not in st.session_state:
+    largura, altura = 100, 100
+    st.session_state.largura = largura
+    st.session_state.altura = altura
+    st.session_state.pessoas = [
+        Pessoa(i, random.uniform(0, largura), random.uniform(0, altura))
+        for i in range(20)
+    ]
+    st.session_state.casais = 0
+    st.session_state.pausado = False
+
+# 🔄 Atualização automática a cada 200ms
+st_autorefresh(interval=200, key="auto_refresh")
+
+# ----- Título e Controles -----
+st.title("💘 Cupido: Par de Pontos Mais Próximos")
+
+col2, col3 = st.columns(2)
+
+with col2:
+    if st.button("💘 Flexar casal"):
+        p1, p2 = encontrar_par_mais_proximo(st.session_state.pessoas)
+        if p1 and p2:
+            p1.ativo = False
+            p2.ativo = False
+            st.session_state.casais += 1
+            st.success(f"Casal formado: {p1.id} + {p2.id}")
+        else:
+            st.info("Nenhum par restante!")
+
+with col3:
+    if st.button("🔁 Nova cidade"):
+        st.session_state.pessoas = [
+            Pessoa(i, random.uniform(0, st.session_state.largura), random.uniform(0, st.session_state.altura))
+            for i in range(20)
+        ]
+        st.session_state.casais = 0
+
+for p in st.session_state.pessoas:
+    p.mover(st.session_state.largura, st.session_state.altura)
+
+# ----- Mostrar gráfico -----
+fig, ax = plt.subplots()
+ax.set_xlim(0, st.session_state.largura)
+ax.set_ylim(0, st.session_state.altura)
+
+for p in st.session_state.pessoas:
+    if p.ativo:
+        ax.plot(p.x, p.y, 'bo')  # ponto azul
+    else:
+        ax.plot(p.x, p.y, 'ro')  # ponto vermelho (casal removido)
+        ax.text(p.x, p.y, str(p.id), fontsize=8, ha='right', va='bottom')
+
+ax.set_title("Pessoas na praça")
+
+st.pyplot(fig)
+
+# ----- Estatísticas -----
+st.markdown(f"**Casais formados:** {st.session_state.casais}")
+ativos = sum(1 for p in st.session_state.pessoas if p.ativo)
+st.markdown(f"**Pessoas restantes:** {ativos}")
