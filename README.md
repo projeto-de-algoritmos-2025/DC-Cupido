@@ -13,7 +13,7 @@
 
 ## ℹ️ Sobre o Projeto
 
-Você é o **Cupido** observando uma praça vista de cima. Várias pessoas (pontos) andam aleatoriamente. Com suas flexas, você pode usar o algoritmo do par de pontos mais próximos para unir dois corações. Eles "saem do gráfico" como se estivessem indo namorar. O jogo continua até todos os pontos serem pareados ou o usuário decidir trocar de cidade (novo mapa).
+Você é o **Cupido** observando uma praça vista de cima. Várias pessoas (pontos) andam aleatoriamente. Com suas flechas, você pode usar o algoritmo do par de pontos mais próximos para unir dois corações. Eles "saem do gráfico" como se estivessem indo namorar. O jogo continua até todos os pontos serem pareados ou o usuário decidir trocar de cidade (novo mapa).
 
 
 ## Screenshots
@@ -47,9 +47,9 @@ streamlit run main.py
 
 1. **🏙️ Visualização da Praça**: 
    - Pontos azuis representam pessoas solteiras andando pela praça
-   - Uma linha roxa tracejada conecta o par mais próximo em tempo real (onde a flexa do cupido está mais propícia a cair)
+   - Uma linha roxa tracejada conecta o par mais próximo em tempo real (onde a flecha do cupido está mais propícia a cair)
 
-2. **💘 Flexar casal mais próximo**: 
+2. **💘 Flechar casal mais próximo**: 
    - Clique neste botão para formar um casal com as duas pessoas mais próximas a partir do algoritmo de par de pontos mais próximos
    - O par se torna vermelho e seus nomes aparecem no gráfico
    - Após 3 segundos, o casal "sai da praça"

@@ -120,12 +120,12 @@ st_autorefresh(interval=200, key="auto_refresh")
 
 # ----- Título e Controles -----
 st.title("💘 Cupido: Par de Pontos Mais Próximos")
-st.caption('Você é o Cupido observando uma praça vista de cima. Várias pessoas (pontos) andam aleatoriamente. Com suas flexas, você pode usar o algoritmo do par de pontos mais próximos para unir dois corações. Eles "saem do gráfico" como se estivessem indo namorar. O jogo continua até todos os pontos serem pareados ou o usuário decidir trocar de cidade (novo mapa).')
+st.caption('Você é o Cupido observando uma praça vista de cima. Várias pessoas (pontos) andam aleatoriamente. Com suas flechas, você pode usar o algoritmo do par de pontos mais próximos para unir dois corações. Eles "saem do gráfico" como se estivessem indo namorar. O jogo continua até todos os pontos serem pareados ou o usuário decidir trocar de cidade (novo mapa).')
 
 col2, col3 = st.columns(2)
 
 with col2:
-    if st.button("💘 Flexar casal mais próximo"):
+    if st.button("💘 flechar casal mais próximo"):
         p1, p2 = encontrar_par_mais_proximo(st.session_state.pessoas)
         if p1 and p2:
             p1.ativo = False
