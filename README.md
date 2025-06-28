@@ -23,8 +23,6 @@ Clique nas imagens para assistir uma demonstração
 [![tela inicial](image.png)](https://www.youtube.com/watch?v=HwRLZ7BuL8s)
 [![resultado de casais formados](image-1.png)](https://www.youtube.com/watch?v=HwRLZ7BuL8s)
 
-## Vídeo demonstrativo 
-
 
 ## Instalação 
 **Linguagem**: Python<br>
