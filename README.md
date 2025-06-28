@@ -37,7 +37,7 @@ cd DC-Cupido
 ```
 2. **Instale as dependências:**
 ```bash
-pip install streamlit matplotlib streamlit-autorefresh
+pip install streamlit matplotlib streamlit-autorefresh names
 ```
 ## Uso 
 Depois de instalar tudo corretamente, execute o seguinte comando no terminal:
